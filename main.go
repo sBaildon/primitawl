@@ -11,9 +11,9 @@ import (
 
 /* Prefer to make this const */
 var (
-	depth *int = flag.Int("depth", 2, "Max crawl depth")
+	maxDepth       *int  = flag.Int("max-depth", 2, "Max crawl depth")
 	followExternal *bool = flag.Bool("follow-external", false, "Follow external links")
-	root string
+	root           string
 )
 
 func main() {
@@ -31,7 +31,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	BeginCrawl(*url, *depth)
+	BeginCrawl(*url, *maxDepth)
 }
 
 func BeginCrawl(u url.URL, maxDepth int) {
@@ -84,7 +84,7 @@ func Crawl(u url.URL, depth int, maxDepth int) {
 }
 
 func shouldVisit(u url.URL) bool {
-	return ( (*followExternal) && (u.Hostname() == root) )
+	return ((*followExternal) && (u.Hostname() == root))
 }
 
 func usage() {
