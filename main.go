@@ -84,7 +84,7 @@ func Crawl(u url.URL, depth int, maxDepth int) {
 }
 
 func shouldVisit(u url.URL) bool {
-	return ((*followExternal) && (u.Hostname() == root))
+	return ((u.Hostname() != root) && (*followExternal)) || (u.Hostname() == root)
 }
 
 func usage() {
