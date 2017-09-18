@@ -59,7 +59,7 @@ func Crawl(u url.URL, depth int, maxDepth int) {
 
 		switch {
 		case tt == html.ErrorToken:
-			return // End of the document, we're done
+			return
 		case tt == html.StartTagToken:
 			t := z.Token()
 
@@ -73,7 +73,7 @@ func Crawl(u url.URL, depth int, maxDepth int) {
 						}
 
 						fmt.Printf("[%s]\t%s\t %s\n", _u.String(), _u.Host, u.Host)
-						if _u.Host == u.Host {
+						if shouldVisit(*_u) {
 							Crawl(*_u, depth, maxDepth)
 						}
 					}
@@ -84,7 +84,7 @@ func Crawl(u url.URL, depth int, maxDepth int) {
 }
 
 func shouldVisit(u url.URL) bool {
-	return ((u.Hostname() != root) && (*followExternal)) || (u.Hostname() == root)
+	return (len(u.Hostname()) > 0) && (((u.Hostname() != root) && (*followExternal)) || (u.Hostname() == root))
 }
 
 func usage() {
