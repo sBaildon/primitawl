@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 )
 
 type Page struct {
@@ -38,13 +39,17 @@ func main() {
 
 	root = *url
 
-	go Crawl(root, *depth)
+	var wg sync.WaitGroup
 
-func BeginCrawl(u url.URL, maxDepth int) {
-	Crawl(u, 0, maxDepth)
+	wg.Add(1)
+	go Crawl(root, *depth, &wg)
+
+	wg.Wait()
+	fmt.Println("Wait over!")
 }
 
-func Crawl(u url.URL, depth int) {
+func Crawl(u url.URL, depth int, wg *sync.WaitGroup) {
+	defer wg.Done()
 	if depth <= 0 {
 		fmt.Println("Reached max depth")
 		return
@@ -94,7 +99,8 @@ func Crawl(u url.URL, depth int) {
 
 						if shouldVisit(_u) {
 							fmt.Printf("Crawling %s\n", _u.String())
-							go Crawl(*_u, depth-1)
+							wg.Add(1)
+							go Crawl(*_u, depth-1, wg)
 						} else {
 							fmt.Printf("Skipping %s\n", _u.Hostname())
 						}
