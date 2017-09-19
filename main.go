@@ -62,6 +62,10 @@ func Crawl(u url.URL, depth int, wg *sync.WaitGroup, pageCache *cache.Cache) {
 		return
 	}
 
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return
+	}
+
 	resp, err := http.Get(u.String())
 	if err != nil {
 		panic(err)
@@ -97,8 +101,8 @@ func Crawl(u url.URL, depth int, wg *sync.WaitGroup, pageCache *cache.Cache) {
 							return
 						}
 
-						resolveRelativeUrl(u, _u)
 						page.links = append(page.links, *_u)
+						resolveRelativeUrl(u, _u)
 
 						if shouldVisit(_u, pageCache) {
 							fmt.Printf("Visiting %s\n", _u.String())
@@ -116,7 +120,6 @@ func resolveRelativeUrl(parent url.URL, child *url.URL) {
 	/* Create a complete URL we can crawl */
 	if len(child.Hostname()) == 0 {
 		child.Host = parent.Host
-		child.Scheme = parent.Scheme
 	}
 
 	/* Relative child paths should include parent and child paths */
