@@ -6,8 +6,8 @@ import (
 	"golang.org/x/net/html"
 	"net/http"
 	"net/url"
-	"strings"
 	"os"
+	"strings"
 )
 
 /* Prefer to make this const */
