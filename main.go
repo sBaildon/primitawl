@@ -116,11 +116,13 @@ func Crawl(u url.URL, depth int, wg *sync.WaitGroup, pageCache *cache.Cache) {
 }
 
 func resolveRelativeUrl(parent url.URL, child *url.URL) {
+	/* Create a complete URL we can crawl */
 	if len(child.Hostname()) == 0 {
 		child.Host = parent.Host
 		child.Scheme = parent.Scheme
 	}
 
+	/* Relative child paths should include parent and child paths */
 	if !strings.HasPrefix(child.Path, "/") {
 		child.Path = parent.Path + child.Path
 	}
