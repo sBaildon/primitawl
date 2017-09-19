@@ -11,7 +11,7 @@ import (
 )
 
 type Page struct {
-	url    string
+	url    url.URL
 	assets []string
 }
 
@@ -57,7 +57,7 @@ func Crawl(u url.URL, depth int) {
 		panic(err)
 	}
 
-	page := Page{url: u.String(), assets: make([]string, 0)}
+	page := Page{url: u, assets: make([]string, 0)}
 
 	z := html.NewTokenizer(resp.Body)
 	for {
@@ -65,7 +65,7 @@ func Crawl(u url.URL, depth int) {
 
 		switch tt {
 		case html.ErrorToken:
-			fmt.Printf("Resources for %s\n", u.String())
+			fmt.Printf("Resources for %s\n", page.url.String())
 			for _, v := range page.assets {
 				fmt.Printf("* %s\n", v)
 			}
