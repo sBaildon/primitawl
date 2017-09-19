@@ -1,7 +1,6 @@
 package main
 
 import (
-	"container/list"
 	"flag"
 	"fmt"
 	"golang.org/x/net/html"
@@ -54,14 +53,17 @@ func Crawl(u url.URL, depth int) {
 
 	z := html.NewTokenizer(resp.Body)
 
-	resources := list.New()
+	var resources []string
 
 	for {
 		tt := z.Next()
 
 		switch {
 		case tt == html.ErrorToken:
-			fmt.Printf("%s contained resources %v\n", u.Hostname(), resources)
+			fmt.Printf("Resources for %s\n", u.String())
+			for _, v := range resources {
+				fmt.Println(v)
+			}
 			return
 		case tt == html.StartTagToken:
 			t := z.Token()
@@ -69,7 +71,15 @@ func Crawl(u url.URL, depth int) {
 			if t.Data == "link" {
 				for _, a := range t.Attr {
 					if a.Key == "href" {
-						resources.PushBack(a.Val)
+						resources = append(resources, a.Val)
+					}
+				}
+			}
+
+			if (t.Data == "img") || (t.Data == "script") {
+				for _, a := range t.Attr {
+					if a.Key == "src" {
+						resources = append(resources, a.Val)
 					}
 				}
 			}
@@ -99,7 +109,6 @@ func Crawl(u url.URL, depth int) {
 			}
 		}
 	}
-
 }
 
 func shouldVisit(u url.URL) bool {
