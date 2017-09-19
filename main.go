@@ -12,7 +12,7 @@ import (
 
 /* Prefer to make this const */
 var (
-	maxDepth       *int  = flag.Int("max-depth", 2, "Max crawl depth")
+	depth          *int  = flag.Int("depth", 2, "Crawl depth")
 	followExternal *bool = flag.Bool("follow-external", false, "Follow external links")
 	root           url.URL
 )
@@ -33,15 +33,14 @@ func main() {
 
 	root = *url
 
-	BeginCrawl(root, *maxDepth)
-}
+	go Crawl(root, *depth)
 
 func BeginCrawl(u url.URL, maxDepth int) {
 	Crawl(u, 0, maxDepth)
 }
 
-func Crawl(u url.URL, depth int, maxDepth int) {
-	if maxDepth == depth {
+func Crawl(u url.URL, depth int) {
+	if depth <= 0 {
 		fmt.Println("Reached max depth")
 		return
 	}
@@ -55,7 +54,6 @@ func Crawl(u url.URL, depth int, maxDepth int) {
 
 	z := html.NewTokenizer(resp.Body)
 
-	depth++
 	resources := list.New()
 
 	for {
@@ -92,7 +90,7 @@ func Crawl(u url.URL, depth int, maxDepth int) {
 
 						if shouldVisit(*_u) {
 							fmt.Printf("Crawling %s\n", _u.String())
-							go Crawl(*_u, depth, maxDepth)
+							go Crawl(*_u, depth-1)
 						} else {
 							fmt.Printf("Skipping %s\n", _u.Hostname())
 						}
