@@ -10,6 +10,11 @@ import (
 	"strings"
 )
 
+type Page struct {
+	url    string
+	assets []string
+}
+
 /* Prefer to make this const */
 var (
 	depth          *int  = flag.Int("depth", 2, "Crawl depth")
@@ -52,17 +57,16 @@ func Crawl(u url.URL, depth int) {
 		panic(err)
 	}
 
+	page := Page{url: u.String(), assets: make([]string, 0)}
+
 	z := html.NewTokenizer(resp.Body)
-
-	var resources []string
-
 	for {
 		tt := z.Next()
 
 		switch tt {
 		case html.ErrorToken:
 			fmt.Printf("Resources for %s\n", u.String())
-			for _, v := range resources {
+			for _, v := range page.assets {
 				fmt.Printf("* %s\n", v)
 			}
 			return
@@ -73,7 +77,7 @@ func Crawl(u url.URL, depth int) {
 			case "link", "img", "script":
 				for _, a := range t.Attr {
 					if a.Key == "src" || a.Key == "href" {
-						resources = append(resources, a.Val)
+						page.assets = append(page.assets, a.Val)
 					}
 				}
 
