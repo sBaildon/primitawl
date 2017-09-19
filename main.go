@@ -51,10 +51,7 @@ func main() {
 	wg.Wait()
 	fmt.Println("Wait over!")
 
-	for _, v := range pageCache.Items() {
-		page := v.Object.(Page)
-		fmt.Println(page.url.String())
-	}
+	displaySiteMap(*pageCache)
 }
 
 func Crawl(u url.URL, depth int, wg *sync.WaitGroup, pageCache *cache.Cache) {
@@ -78,6 +75,7 @@ func Crawl(u url.URL, depth int, wg *sync.WaitGroup, pageCache *cache.Cache) {
 
 		switch tt {
 		case html.ErrorToken:
+			pageCache.Add(page.url.String(), page, cache.NoExpiration)
 			return
 		case html.StartTagToken:
 			t := z.Token()
@@ -100,11 +98,10 @@ func Crawl(u url.URL, depth int, wg *sync.WaitGroup, pageCache *cache.Cache) {
 						}
 
 						resolveRelativeUrl(u, _u)
+						page.links = append(page.links, *_u)
 
 						if shouldVisit(_u, pageCache) {
 							fmt.Printf("Visiting %s\n", _u.String())
-							page.links = append(page.links, *_u)
-							pageCache.Add(page.url.String(), page, cache.NoExpiration)
 							wg.Add(1)
 							go Crawl(*_u, depth-1, wg, pageCache)
 						}
@@ -133,6 +130,24 @@ func shouldVisit(u *url.URL, pageCache *cache.Cache) bool {
 	_, cacheHit := pageCache.Get(u.String())
 
 	return (*followExternal || internal) && !cacheHit
+}
+
+func displaySiteMap(c cache.Cache) {
+	for _, v := range c.Items() {
+		page := v.Object.(Page)
+		fmt.Printf("[%s]\n", page.url.String())
+
+		fmt.Printf("Links:\n")
+		for _, i := range page.links {
+			fmt.Printf("\t%s\n", i.String())
+		}
+
+		fmt.Printf("Assets:\n")
+		for _, i := range page.assets {
+			fmt.Printf("\t%s\n", i)
+		}
+		fmt.Println("")
+	}
 }
 
 func usage() {
