@@ -63,23 +63,16 @@ func Crawl(u url.URL, depth int) {
 		case html.ErrorToken:
 			fmt.Printf("Resources for %s\n", u.String())
 			for _, v := range resources {
-				fmt.Println(v)
+				fmt.Printf("* %s\n", v)
 			}
 			return
 		case html.StartTagToken:
 			t := z.Token()
 
 			switch t.Data {
-			case "link":
+			case "link", "img", "script":
 				for _, a := range t.Attr {
-					if a.Key == "href" {
-						resources = append(resources, a.Val)
-					}
-				}
-
-			case "img", "script":
-				for _, a := range t.Attr {
-					if a.Key == "src" {
+					if a.Key == "src" || a.Key == "href" {
 						resources = append(resources, a.Val)
 					}
 				}
