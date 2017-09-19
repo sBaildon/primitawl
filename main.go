@@ -26,7 +26,7 @@ func main() {
 
 	url, err := url.ParseRequestURI(flag.Arg(0))
 	if err != nil {
-		fmt.Printf("Input was not a valid URL: %s\n", root.String())
+		fmt.Printf("Input was not a valid URL: %s\n", flag.Arg(0))
 		os.Exit(1)
 	}
 
