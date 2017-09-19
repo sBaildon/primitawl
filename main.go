@@ -33,9 +33,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	url, err := url.ParseRequestURI(flag.Arg(0))
+	input := flag.Arg(0)
+	if !strings.HasPrefix(input, "http") {
+		input = "http://" + input
+	}
+
+	url, err := url.ParseRequestURI(input)
 	if err != nil {
-		fmt.Printf("Input was not a valid URL: %s\n", flag.Arg(0))
+		fmt.Printf("Input was not a valid URL: %s\n", input)
 		os.Exit(1)
 	}
 
