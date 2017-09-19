@@ -13,6 +13,7 @@ import (
 
 type Page struct {
 	url    url.URL
+	links  []url.URL
 	assets []string
 }
 
@@ -50,6 +51,7 @@ func main() {
 
 func Crawl(u url.URL, depth int, wg *sync.WaitGroup) {
 	defer wg.Done()
+
 	if depth <= 0 {
 		fmt.Println("Reached max depth")
 		return
@@ -70,9 +72,12 @@ func Crawl(u url.URL, depth int, wg *sync.WaitGroup) {
 
 		switch tt {
 		case html.ErrorToken:
-			fmt.Printf("Resources for %s\n", page.url.String())
+			fmt.Printf("[%s]\n", page.url.String())
+			for _, v := range page.links {
+				fmt.Printf("|- %s\n", v.String())
+			}
 			for _, v := range page.assets {
-				fmt.Printf("* %s\n", v)
+				fmt.Printf("|-- %s\n", v)
 			}
 			return
 		case html.StartTagToken:
@@ -99,6 +104,7 @@ func Crawl(u url.URL, depth int, wg *sync.WaitGroup) {
 
 						if shouldVisit(_u) {
 							fmt.Printf("Crawling %s\n", _u.String())
+							page.links = append(page.links, *_u)
 							wg.Add(1)
 							go Crawl(*_u, depth-1, wg)
 						} else {
