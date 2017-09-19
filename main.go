@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/patrickmn/go-cache"
 	"golang.org/x/net/html"
 	"net/http"
 	"net/url"
@@ -40,16 +41,23 @@ func main() {
 
 	root = *url
 
+	pageCache := cache.New(cache.NoExpiration, cache.NoExpiration)
+
 	var wg sync.WaitGroup
 
 	wg.Add(1)
-	go Crawl(root, *depth, &wg)
+	go Crawl(root, *depth, &wg, pageCache)
 
 	wg.Wait()
 	fmt.Println("Wait over!")
+
+	for _, v := range pageCache.Items() {
+		page := v.Object.(Page)
+		fmt.Println(page.url.String())
+	}
 }
 
-func Crawl(u url.URL, depth int, wg *sync.WaitGroup) {
+func Crawl(u url.URL, depth int, wg *sync.WaitGroup, pageCache *cache.Cache) {
 	defer wg.Done()
 
 	if depth <= 0 {
@@ -57,14 +65,12 @@ func Crawl(u url.URL, depth int, wg *sync.WaitGroup) {
 		return
 	}
 
-	fmt.Printf("Crawling %s\n", u.String())
-
 	resp, err := http.Get(u.String())
 	if err != nil {
 		panic(err)
 	}
 
-	page := Page{url: u, assets: make([]string, 0)}
+	page := Page{url: u, links: make([]url.URL, 0), assets: make([]string, 0)}
 
 	z := html.NewTokenizer(resp.Body)
 	for {
@@ -72,13 +78,6 @@ func Crawl(u url.URL, depth int, wg *sync.WaitGroup) {
 
 		switch tt {
 		case html.ErrorToken:
-			fmt.Printf("[%s]\n", page.url.String())
-			for _, v := range page.links {
-				fmt.Printf("|- %s\n", v.String())
-			}
-			for _, v := range page.assets {
-				fmt.Printf("|-- %s\n", v)
-			}
 			return
 		case html.StartTagToken:
 			t := z.Token()
@@ -102,13 +101,12 @@ func Crawl(u url.URL, depth int, wg *sync.WaitGroup) {
 
 						resolveRelativeUrl(u, _u)
 
-						if shouldVisit(_u) {
-							fmt.Printf("Crawling %s\n", _u.String())
+						if shouldVisit(_u, pageCache) {
+							fmt.Printf("Visiting %s\n", _u.String())
 							page.links = append(page.links, *_u)
+							pageCache.Add(page.url.String(), page, cache.NoExpiration)
 							wg.Add(1)
-							go Crawl(*_u, depth-1, wg)
-						} else {
-							fmt.Printf("Skipping %s\n", _u.Hostname())
+							go Crawl(*_u, depth-1, wg, pageCache)
 						}
 					}
 				}
@@ -128,8 +126,11 @@ func resolveRelativeUrl(parent url.URL, child *url.URL) {
 	}
 }
 
-func shouldVisit(u *url.URL) bool {
-	return ((u.Hostname() != root.Hostname()) && (*followExternal)) || (u.Hostname() == root.Hostname())
+func shouldVisit(u *url.URL, pageCache *cache.Cache) bool {
+	internal := u.Hostname() == root.Hostname()
+	_, cacheHit := pageCache.Get(u.String())
+
+	return (*followExternal || internal) && !cacheHit
 }
 
 func usage() {
