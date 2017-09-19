@@ -20,7 +20,7 @@ func main() {
 	flag.Parse()
 
 	if flag.NArg() != 1 {
-		fmt.Println("Args != 1")
+		fmt.Println("Specify one URL to crawl")
 		os.Exit(1)
 	}
 
