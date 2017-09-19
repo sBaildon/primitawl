@@ -95,7 +95,7 @@ func Crawl(u url.URL, depth int) {
 
 						resolveRelativeUrl(u, _u)
 
-						if shouldVisit(*_u) {
+						if shouldVisit(_u) {
 							fmt.Printf("Crawling %s\n", _u.String())
 							go Crawl(*_u, depth-1)
 						} else {
@@ -119,7 +119,7 @@ func resolveRelativeUrl(parent url.URL, child *url.URL) {
 	}
 }
 
-func shouldVisit(u url.URL) bool {
+func shouldVisit(u *url.URL) bool {
 	return ((u.Hostname() != root.Hostname()) && (*followExternal)) || (u.Hostname() == root.Hostname())
 }
 
