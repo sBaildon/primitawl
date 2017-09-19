@@ -6,6 +6,7 @@ import (
 	"golang.org/x/net/html"
 	"net/http"
 	"net/url"
+	"strings"
 	"os"
 )
 
@@ -92,10 +93,7 @@ func Crawl(u url.URL, depth int) {
 							return
 						}
 
-						if len(_u.Hostname()) == 0 {
-							_u.Host = u.Hostname()
-							_u.Scheme = u.Scheme
-						}
+						resolveRelativeUrl(u, _u)
 
 						if shouldVisit(*_u) {
 							fmt.Printf("Crawling %s\n", _u.String())
@@ -107,6 +105,17 @@ func Crawl(u url.URL, depth int) {
 				}
 			}
 		}
+	}
+}
+
+func resolveRelativeUrl(parent url.URL, child *url.URL) {
+	if len(child.Hostname()) == 0 {
+		child.Host = parent.Host
+		child.Scheme = parent.Scheme
+	}
+
+	if !strings.HasPrefix(child.Path, "/") {
+		child.Path = parent.Path + child.Path
 	}
 }
 
